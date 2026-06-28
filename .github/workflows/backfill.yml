@@ -23,6 +23,10 @@ jobs:
       contents: write
     env:
       CONGRESSKIT_USER_AGENT: "congresskit ${{ secrets.CONTACT_EMAIL || 'contact@example.com' }}"
+      # Residential proxy for Senate EFD (Akamai blocks bare datacenter IPs).
+      # Unset = Senate is attempted direct and self-skips on 403; House is
+      # unaffected.
+      SENATE_PROXY: ${{ secrets.SENATE_PROXY }}
       RUST_LOG: info
     steps:
       - uses: actions/checkout@v6

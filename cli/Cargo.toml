@@ -12,7 +12,7 @@ path = "src/main.rs"
 congresskit = { path = "../crates/congresskit", version = "0.1.0" }
 tokio = { workspace = true }
 anyhow = { workspace = true }
-reqwest = { workspace = true, features = ["cookies"] }
+reqwest = { workspace = true, features = ["cookies", "socks"] }
 sha2 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

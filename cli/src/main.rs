@@ -177,8 +177,13 @@ async fn backfill(data_dir: &Path, from: i32, to: i32, chamber: ChamberArg) -> R
                     eprintln!("{year} senate: blocked/unreachable, skipping (see README)");
                 }
                 Ok(s) => {
-                    eprintln!("{year} senate: {} trades", s.trades.len());
+                    eprintln!(
+                        "{year} senate: {} trades ({} paper-skip)",
+                        s.trades.len(),
+                        s.skipped_paper
+                    );
                     totals.senate_rows += s.trades.len();
+                    totals.senate_paper_skipped += s.skipped_paper;
                     *totals.senate_by_year.entry(year).or_default() += s.trades.len();
                     rows.extend(s.trades);
                 }
@@ -204,6 +209,7 @@ struct Totals {
     house_rows: usize,
     senate_rows: usize,
     scanned_skipped: usize,
+    senate_paper_skipped: usize,
     matched: usize,
     unmatched: usize,
     senate_blocked: bool,
@@ -219,6 +225,10 @@ impl Totals {
         eprintln!(
             "scanned/unparseable House PDFs skipped: {}",
             self.scanned_skipped
+        );
+        eprintln!(
+            "senate paper/scanned filings skipped: {}",
+            self.senate_paper_skipped
         );
         let total = self.matched + self.unmatched;
         let rate = if total > 0 {
@@ -337,14 +347,31 @@ fn http_client() -> Result<reqwest::Client> {
         .context("build http client")
 }
 
-/// A cookie-jar client for the Senate EFD agreement flow.
+/// A cookie-jar client for the Senate EFD flow, routed through a residential
+/// proxy when `SENATE_PROXY` (preferred) or `HTTPS_PROXY` is set. Akamai blocks
+/// bare datacenter IPs, so CI needs a proxy; without one this client attempts
+/// direct and the caller degrades cleanly on the resulting 403.
 fn cookie_client() -> Result<reqwest::Client> {
-    reqwest::Client::builder()
+    let mut builder = reqwest::Client::builder()
         .user_agent(user_agent())
         .cookie_store(true)
-        .timeout(std::time::Duration::from_secs(60))
-        .build()
-        .context("build cookie http client")
+        .timeout(std::time::Duration::from_secs(60));
+    if let Some(proxy_url) = senate_proxy() {
+        builder = builder.proxy(
+            reqwest::Proxy::all(&proxy_url)
+                .with_context(|| format!("invalid SENATE_PROXY url: {proxy_url}"))?,
+        );
+        eprintln!("senate: routing through proxy");
+    }
+    builder.build().context("build cookie http client")
+}
+
+/// The configured Senate proxy: `SENATE_PROXY` wins over `HTTPS_PROXY`.
+fn senate_proxy() -> Option<String> {
+    std::env::var("SENATE_PROXY")
+        .or_else(|_| std::env::var("HTTPS_PROXY"))
+        .ok()
+        .filter(|s| !s.trim().is_empty())
 }
 
 // ---------------------------------------------------------------------------

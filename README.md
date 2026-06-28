@@ -49,7 +49,7 @@ async fn main() -> congresskit::Result<()> {
 | Chamber | Source | Status |
 |---|---|---|
 | House | US House Clerk financial disclosures | Full, fully automated. |
-| Senate | US Senate Electronic Financial Disclosure (EFD) | Implemented best-effort. The EFD host is bot-protected and returns 403 from datacenter and CI IP ranges, so the nightly job cannot reliably reach it. Senate ingest works from a non-datacenter IP and degrades cleanly (logs a warning and exits the source) when blocked. |
+| Senate | US Senate Electronic Financial Disclosure (EFD) | Implemented. The EFD host is bot-protected and returns 403 from datacenter and CI IP ranges, so Senate ingest in CI requires a residential proxy set via the `SENATE_PROXY` secret (provider-agnostic: any `http://`, `https://`, or `socks5://` residential endpoint). With a working proxy the nightly job accepts the EFD terms, pages the periodic-transaction-report list, parses each electronic PTR table, and normalizes to the same schema (`chamber=senate`, `source=senate_efd`). Without a proxy it attempts direct and degrades cleanly (logs a warning and exits the source) when blocked. House needs no proxy. |
 
 Each trade is enriched with `party` and a stable `bioguide_id` joined from the public-domain unitedstates/congress-legislators roster. Members whose filing name and state do not match a roster entry keep their filing name with an empty `party` and `bioguide_id`; the join rate is reported by the backfill, never guessed.
 

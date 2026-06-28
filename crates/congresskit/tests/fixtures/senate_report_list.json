@@ -1,0 +1,21 @@
+{
+  "draw": 1,
+  "recordsTotal": 2,
+  "recordsFiltered": 2,
+  "data": [
+    [
+      "Thomas",
+      "Carper",
+      "DE",
+      "<a href=\"/search/view/ptr/abc-123/\" target=\"_blank\">Periodic Transaction Report for 01/15/2024</a>",
+      "01/15/2024"
+    ],
+    [
+      "Jane",
+      "Example",
+      "CA",
+      "<a href=\"/search/view/paper/def-456/\" target=\"_blank\">Periodic Transaction Report</a>",
+      "02/20/2024"
+    ]
+  ]
+}
